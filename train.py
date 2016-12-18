@@ -22,16 +22,16 @@ y = tf.placeholder("float", [None, n_classes])
 
 # Create model
 def multilayer_perceptron(x, weights, biases):
-    layer_1 = tf.add(tf.matmul(x, weights['h1'], biases['b1']))
+    layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     layer_1 = tf.nn.relu(layer_1)
 
-    layer_2 = tf.add(tf.matmul(layer_1, weights['h2'], biases['b2']))
+    layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])
     layer_2 = tf.nn.relu(layer_2)
 
-    layer_3 = tf.add(tf.matmul(layer_2, weights['h3'], biases['b3']))
+    layer_3 = tf.add(tf.matmul(layer_2, weights['h3']), biases['b3'])
     layer_3 = tf.nn.relu(layer_3)
 
-    out_layer = tf.matmul((layer3, weight['out']) + biases['out'])
+    out_layer = tf.matmul(layer_3, weights['out']) + biases['out']
 
     return out_layer
 
