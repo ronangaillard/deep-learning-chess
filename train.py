@@ -1,12 +1,15 @@
 import tensorflow as tf
 import numpy as np
+from bitarray import bitarray
 
+# Training data
+training_data_filename = "data.bin"
 
 # Network config
 input_size = 768
 layer_size = 2048
 number_of_layer = 3
-output_size = 1
+output_size = 768
 learning_rate = 0.001
 training_epochs = 10
 number_of_games = 10
@@ -17,8 +20,8 @@ display_step = 1
 
 
 # tf Graph input
-x = tf.placeholder("float", [None, n_input])
-y = tf.placeholder("float", [None, n_classes])
+x = tf.placeholder("float", [None, input_size])
+y = tf.placeholder("float", [None, output_size])
 
 # Create model
 def multilayer_perceptron(x, weights, biases):
@@ -34,6 +37,15 @@ def multilayer_perceptron(x, weights, biases):
     out_layer = tf.matmul(layer_3, weights['out']) + biases['out']
 
     return out_layer
+
+def successive_positions():
+    with open(training_data_filename) as binfile:
+        next_pos = bitarray(0)
+        next_pos.fromfile(binfile, input_size/8)
+        while next_pos != None:
+            yield next_pos
+            next_pos = bitarray(0)
+            next_pos.fromfile(binfile, input_size/8)
 
 # Store layers weight & bias
 weights = {
@@ -59,28 +71,36 @@ optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 # Initializing the variables
 init = tf.initialize_all_variables()
 
+batch_y = None
+
 # Launch training
 with tf.Session() as session:
     session.run(init)
 
     # Training cycle
     for epoch in range(training_epochs):
-        avg_cost = 0.0
-        total_batch = int(number_of_games/batch_size)
+        #avg_cost = 0.0
+        #total_batch = int(number_of_games/batch_size)
 
         # Loop over all batches
-        for i in range(total_batch):
+        for next_pos in successive_positions():
+            next_pos_int = map(int, next_pos)
+            if batch_y is None or len(batch_y) == 0:
+                batch_y = next_pos_int
+                continue
             # Get next batch
-            # batch_x, batch_y = 
+            batch_x, batch_y = batch_y, next_pos_int
+            print "Batches ready ! X :", len(batch_x), "; Y:", len(batch_y)
+            print "first element", batch_x
             # Run optimization op (backprop) and cost op (to get loss value)
             _, c = session.run([optimizer, cost], feed_dict={x: batch_x, y: batch_y})
 
             # Compute average loss
-            avg_cost += c / total_batch
+            #avg_cost += c / total_batch
 
             # Display logs per epoch step
             if epoch % display_step == 0:
-                print "Epoch :", epoch, " ## cost :", cost
+                print "Epoch :", epoch#, " ## cost :", cost
 
     print "Trainging completed !"
 
